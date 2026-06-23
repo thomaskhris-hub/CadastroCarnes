@@ -1,16 +1,82 @@
-# React + Vite
+# CadastroCarnes - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend do sistema CadastroCarnes, desenvolvido em React com Vite.
 
-Currently, two official plugins are available:
+Aplicação responsável pela interface do usuário, gerenciamento das telas e comunicação com a API Backend.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tecnologias utilizadas
 
-## React Compiler
+- React
+- Vite
+- JavaScript
+- CSS
+- Axios
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Funcionalidades
 
-## Expanding the ESLint configuration
+- Cadastro de carnes
+- Cadastro de compradores
+- Cadastro de localidades
+- Cadastro de pedidos
+- Integração com API REST
+- Navegação entre telas
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+# Como executar o Frontend localmente
+
+## Pré-requisitos
+
+Instalar:
+
+- Node.js
+- npm
+
+Verificar instalação:
+
+bash
+node -v
+npm -v
+
+
+## Clonar o projeto
+
+bash
+git clone https://github.com/thomaskhris-hub/CadastroCarnes.git
+
+
+Entrar na pasta:
+
+bash
+cd CadastroCarnes
+
+
+Instalar dependências:
+
+bash
+npm install
+
+
+Executar o projeto:
+
+bash
+npm run dev
+
+
+O sistema estará disponível em:
+
+http://localhost:5173
+
+
+## Configuração da API
+
+Este frontend utiliza a API:
+
+
+https://github.com/thomaskhris-hub/CadastroCarnesApi
+
+
+A URL da API deve ser configurada no arquivo:
+
+src/api/api.js
+
