@@ -23,6 +23,11 @@ import {
 } from "../services/cidadeService";
 
 
+import {
+    listarPedidos
+} from "../services/pedidoService";
+
+
 
 import {
 
@@ -31,6 +36,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     TextField,
     Typography,
@@ -53,11 +59,20 @@ function Compradores(){
 
     const [cidades,setCidades] = useState([]);
 
+    
+    const [pedidos, setPedidos] = useState([]);
+
 
     const [open,setOpen] = useState(false);
 
 
     const [editando,setEditando] = useState(null);
+
+
+  
+    const [openDelete, setOpenDelete] = useState(false);
+    const [compradorSelecionado, setCompradorSelecionado] = useState(null);
+    const [temPedidoVinculado, setTemPedidoVinculado] = useState(false);
 
 
 
@@ -94,6 +109,13 @@ function Compradores(){
 
         setCidades(listaCidades);
 
+
+       
+        const listaPedidos = 
+            await listarPedidos();
+
+
+        setPedidos(listaPedidos);
 
     }
 
@@ -224,22 +246,24 @@ function Compradores(){
 
 
 
-    async function remover(id){
+   
+    function verificarExclusao(comprador){
+        const possuiPedido = pedidos.some(pedido => Number(pedido.compradorId) === Number(comprador.id));
+        setCompradorSelecionado(comprador);
+        setTemPedidoVinculado(possuiPedido);
+        setOpenDelete(true);
+    }
 
 
 
-        if(confirm("Deseja excluir este comprador?")){
-
-
-            await excluirComprador(id);
-
-
+    
+    async function executarRemocao(){
+        if(compradorSelecionado){
+            await excluirComprador(compradorSelecionado.id);
+            setOpenDelete(false);
+            setCompradorSelecionado(null);
             carregar();
-
-
         }
-
-
     }
 
 
@@ -477,7 +501,7 @@ color="error"
 onClick={()=>
 
 
-remover(row.original.id)
+verificarExclusao(row.original)
 
 }
 
@@ -790,6 +814,45 @@ Salvar
 
 
 
+
+
+
+<Dialog
+    open={openDelete}
+    onClose={() => setOpenDelete(false)}
+>
+    <DialogTitle sx={{ fontWeight: "bold" }}>
+        {temPedidoVinculado ? "Não é possível excluir" : "Confirmar Exclusão"}
+    </DialogTitle>
+    <DialogContent>
+        <DialogContentText>
+            {temPedidoVinculado 
+                ? `O comprador "${compradorSelecionado?.nome}" possui pedidos vinculados ao seu cadastro e não pode ser excluído.`
+                : `Deseja realmente excluir o comprador "${compradorSelecionado?.nome}"?`
+            }
+        </DialogContentText>
+    </DialogContent>
+    <DialogActions sx={{ pb: 2, px: 3 }}>
+        {temPedidoVinculado ? (
+            <Button onClick={() => setOpenDelete(false)} variant="contained" sx={{ background: "#006633" }}>
+                Entendido
+            </Button>
+        ) : (
+            <>
+                <Button onClick={() => setOpenDelete(false)}>
+                    Cancelar
+                </Button>
+                <Button 
+                    onClick={executarRemocao} 
+                    color="error" 
+                    variant="contained"
+                >
+                    Excluir
+                </Button>
+            </>
+        )}
+    </DialogActions>
+</Dialog>
 
 
 </Box>

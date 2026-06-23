@@ -11,6 +11,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     TextField,
     Typography,
@@ -44,6 +45,9 @@ import {
 } from "../services/cidadeService";
 
 
+import {
+    listarCompradores
+} from "../services/compradorService";
 
 
 
@@ -53,6 +57,9 @@ function Localidades(){
 
 
     const [estados,setEstados] = useState([]);
+    
+ 
+    const [compradores, setCompradores] = useState([]);
 
 
 
@@ -76,6 +83,11 @@ function Localidades(){
     const [estadoSelecionado,setEstadoSelecionado] = useState(null);
 
 
+
+  
+    const [openAlerta, setOpenAlerta] = useState(false);
+    const [tipoAlerta, setTipoAlerta] = useState(""); 
+    const [itemSelecionado, setItemSelecionado] = useState(null);
 
 
 
@@ -114,6 +126,9 @@ function Localidades(){
 
         setEstados(dados);
 
+
+        const listaCompradores = await listarCompradores();
+        setCompradores(listaCompradores);
 
     }
 
@@ -164,24 +179,23 @@ function Localidades(){
 
 
 
-    function editarEstado(estado){
+    function verificarEditarEstado(estado){
+      
+        const idsCidadesEstado = estado.cidades?.map(c => c.id) || [];
+        const possuiComprador = compradores.some(comp => idsCidadesEstado.includes(comp.cidadeId));
 
-
-        setEstadoEditando(estado.id);
-
-
-        setFormEstado({
-
-            nome:estado.nome,
-
-            uf:estado.uf
-
-        });
-
-
-        setOpenEstado(true);
-
-
+        if (possuiComprador) {
+            setItemSelecionado(estado);
+            setTipoAlerta("blockEstado");
+            setOpenAlerta(true);
+        } else {
+            setEstadoEditando(estado.id);
+            setFormEstado({
+                nome:estado.nome,
+                uf:estado.uf
+            });
+            setOpenEstado(true);
+        }
     }
 
 
@@ -235,22 +249,17 @@ function Localidades(){
 
 
 
-    async function removerEstado(id){
+    function verificarExclusaoEstado(estado){
+        const idsCidadesEstado = estado.cidades?.map(c => c.id) || [];
+        const possuiComprador = compradores.some(comp => idsCidadesEstado.includes(comp.cidadeId));
 
-
-
-        if(confirm("Excluir estado?")){
-
-
-            await excluirEstado(id);
-
-
-            carregar();
-
-
+        setItemSelecionado(estado);
+        if (possuiComprador) {
+            setTipoAlerta("blockEstado");
+        } else {
+            setTipoAlerta("deleteEstado");
         }
-
-
+        setOpenAlerta(true);
     }
 
 
@@ -293,25 +302,21 @@ function Localidades(){
 
 
 
-    function editarCidade(cidade,estado){
-
-
+    function verificarEditarCidade(cidade, estado){
         setEstadoSelecionado(estado);
+        const possuiComprador = compradores.some(comp => Number(comp.cidadeId) === Number(cidade.id));
 
-
-        setCidadeEditando(cidade.id);
-
-
-        setFormCidade({
-
-            nome:cidade.nome
-
-        });
-
-
-        setOpenCidade(true);
-
-
+        if (possuiComprador) {
+            setItemSelecionado(cidade);
+            setTipoAlerta("blockCidade");
+            setOpenAlerta(true);
+        } else {
+            setCidadeEditando(cidade.id);
+            setFormCidade({
+                nome:cidade.nome
+            });
+            setOpenCidade(true);
+        }
     }
 
 
@@ -326,7 +331,7 @@ function Localidades(){
 
 
 
-        const cidade = {
+        const city = {
 
 
             nome:formCidade.nome,
@@ -347,7 +352,7 @@ function Localidades(){
 
                 cidadeEditando,
 
-                cidade
+                city
 
             );
 
@@ -355,7 +360,7 @@ function Localidades(){
         }else{
 
 
-            await criarCidade(cidade);
+            await criarCidade(city);
 
 
         }
@@ -382,25 +387,34 @@ function Localidades(){
 
 
 
-    async function removerCidade(id){
-
-
-
-        if(confirm("Excluir cidade?")){
-
-
-            await excluirCidade(id);
-
-
-            carregar();
-
-
+    function verificarExclusaoCidade(cidade){
+        const possuiComprador = compradores.some(comp => Number(comp.cidadeId) === Number(cidade.id));
+        
+        setItemSelecionado(cidade);
+        if (possuiComprador) {
+            setTipoAlerta("blockCidade");
+        } else {
+            setTipoAlerta("deleteCidade");
         }
-
-
+        setOpenAlerta(true);
     }
 
 
+
+   
+    async function confirmarAcaoAlerta() {
+        if (!itemSelecionado) return;
+
+        if (tipoAlerta === "deleteEstado") {
+            await excluirEstado(itemSelecionado.id);
+        } else if (tipoAlerta === "deleteCidade") {
+            await excluirCidade(itemSelecionado.id);
+        }
+
+        setOpenAlerta(false);
+        setItemSelecionado(null);
+        carregar();
+    }
 
 
 
@@ -551,7 +565,7 @@ fontWeight="bold"
 
 <IconButton
 
-onClick={()=>editarEstado(estado)}
+onClick={()=>verificarEditarEstado(estado)}
 
 >
 
@@ -565,7 +579,7 @@ onClick={()=>editarEstado(estado)}
 
 color="error"
 
-onClick={()=>removerEstado(estado.id)}
+onClick={()=>verificarExclusaoEstado(estado)}
 
 >
 
@@ -648,7 +662,7 @@ mt:1
 
 size="small"
 
-onClick={()=>editarCidade(cidade,estado)}
+onClick={()=>verificarEditarCidade(cidade, estado)}
 
 >
 
@@ -664,7 +678,7 @@ size="small"
 
 color="error"
 
-onClick={()=>removerCidade(cidade.id)}
+onClick={()=>verificarExclusaoCidade(cidade)}
 
 >
 
@@ -848,6 +862,8 @@ variant="contained"
 
 onClick={salvarEstado}
 
+sx={{ background: "#006633" }}
+
 >
 
 Salvar
@@ -959,6 +975,8 @@ variant="contained"
 
 onClick={salvarCidade}
 
+sx={{ background: "#006633" }}
+
 >
 
 Salvar
@@ -975,6 +993,45 @@ Salvar
 </Dialog>
 
 
+
+
+
+<Dialog
+    open={openAlerta}
+    onClose={() => setOpenAlerta(false)}
+>
+    <DialogTitle sx={{ fontWeight: "bold" }}>
+        {tipoAlerta.startsWith("block") ? "Ação Bloqueada" : "Confirmar Exclusão"}
+    </DialogTitle>
+    <DialogContent>
+        <DialogContentText>
+            {tipoAlerta === "blockEstado" && `O estado "${itemSelecionado?.nome}" possui cidades vinculadas a compradores ativos e não pode ser alterado ou excluído.`}
+            {tipoAlerta === "blockCidade" && `A cidade "${itemSelecionado?.nome}" está vinculada a um ou mais compradores cadastrados e não pode ser alterada ou excluída.`}
+            {tipoAlerta === "deleteEstado" && `Deseja realmente excluir o estado "${itemSelecionado?.nome}" de forma definitiva?`}
+            {tipoAlerta === "deleteCidade" && `Deseja realmente excluir a cidade "${itemSelecionado?.nome}" de forma definitiva?`}
+        </DialogContentText>
+    </DialogContent>
+    <DialogActions sx={{ pb: 2, px: 3 }}>
+        {tipoAlerta.startsWith("block") ? (
+            <Button onClick={() => setOpenAlerta(false)} variant="contained" sx={{ background: "#006633" }}>
+                Entendido
+            </Button>
+        ) : (
+            <>
+                <Button onClick={() => setOpenAlerta(false)}>
+                    Cancelar
+                </Button>
+                <Button 
+                    onClick={confirmarAcaoAlerta} 
+                    color="error" 
+                    variant="contained"
+                >
+                    Excluir
+                </Button>
+            </>
+        )}
+    </DialogActions>
+</Dialog>
 
 
 

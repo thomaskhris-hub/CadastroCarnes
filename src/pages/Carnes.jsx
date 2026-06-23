@@ -16,6 +16,11 @@ import {
 } from "../services/carneService";
 
 
+import {
+    listarPedidos
+} from "../services/pedidoService";
+
+
 
 import {
 
@@ -23,6 +28,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     TextField,
     MenuItem,
@@ -40,9 +46,21 @@ function Carnes(){
 
     const [carnes,setCarnes] = useState([]);
 
+    
+    const [pedidos, setPedidos] = useState([]);
+
     const [open,setOpen] = useState(false);
 
     const [editando,setEditando] = useState(null);
+
+
+   
+    const [openDelete, setOpenDelete] = useState(false);
+    const [carneSelecionada, setCarneSelecionada] = useState(null);
+    const [temPedidoVinculado, setTemPedidoVinculado] = useState(false);
+    
+
+    const [openEditBlock, setOpenEditBlock] = useState(false);
 
 
 
@@ -62,6 +80,12 @@ function Carnes(){
         const dados = await listarCarnes();
 
         setCarnes(dados);
+
+
+      
+        const listaPedidos = await listarPedidos();
+
+        setPedidos(listaPedidos);
 
     }
 
@@ -103,24 +127,24 @@ function Carnes(){
 
 
 
-    function editar(carne){
+   
+    function verificarEditar(carne){
+        const possuiPedido = pedidos.some(pedido => 
+            pedido.itens?.some(item => Number(item.carneId) === Number(carne.id))
+        );
 
-
-        setEditando(carne.id);
-
-
-        setForm({
-
-            descricao:carne.descricao,
-
-            origem:carne.origem
-
-        });
-
-
-        setOpen(true);
-
-
+        if (possuiPedido) {
+            setCarneSelecionada(carne);
+            setOpenEditBlock(true); 
+        } else {
+         
+            setEditando(carne.id);
+            setForm({
+                descricao: carne.descricao,
+                origem: carne.origem
+            });
+            setOpen(true);
+        }
     }
 
 
@@ -165,21 +189,28 @@ function Carnes(){
 
 
 
-    async function remover(id){
+   
+    function verificarExclusao(carne){
+       
+        const possuiPedido = pedidos.some(pedido => 
+            pedido.itens?.some(item => Number(item.carneId) === Number(carne.id))
+        );
+
+        setCarneSelecionada(carne);
+        setTemPedidoVinculado(possuiPedido);
+        setOpenDelete(true);
+    }
 
 
-        if(confirm("Deseja excluir esta carne?")){
 
-
-            await excluirCarne(id);
-
-
+    
+    async function executarRemocao(){
+        if(carneSelecionada){
+            await excluirCarne(carneSelecionada.id);
+            setOpenDelete(false);
+            setCarneSelecionada(null);
             carregar();
-
-
         }
-
-
     }
 
 
@@ -238,10 +269,10 @@ function Carnes(){
 
 
 
-        <Box>
+        <Box sx={{p:3}}>
 
 
-            {/* CABEÇALHO */}
+        
 
 
             <Box
@@ -347,7 +378,6 @@ function Carnes(){
 
 
 
-            {/* TABELA */}
 
 
 
@@ -396,7 +426,7 @@ function Carnes(){
 
                                 size="small"
 
-                                onClick={()=>editar(row.original)}
+                                onClick={()=>verificarEditar(row.original)}
 
                             >
 
@@ -415,7 +445,7 @@ function Carnes(){
                                 color="error"
 
                                 onClick={()=>
-                                    remover(row.original.id)
+                                    verificarExclusao(row.original)
                                 }
 
                             >
@@ -447,7 +477,7 @@ function Carnes(){
 
 
 
-            {/* MODAL */}
+         
 
 
 
@@ -627,6 +657,66 @@ function Carnes(){
             </Dialog>
 
 
+
+
+          
+            <Dialog
+                open={openDelete}
+                onClose={() => setOpenDelete(false)}
+            >
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    {temPedidoVinculado ? "Não é possível excluir" : "Confirmar Exclusão"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {temPedidoVinculado 
+                            ? `A carne "${carneSelecionada?.descricao}" já foi adicionada em pedidos do sistema e não pode ser excluída.`
+                            : `Deseja realmente excluir a carne "${carneSelecionada?.descricao}"?`
+                        }
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ pb: 2, px: 3 }}>
+                    {temPedidoVinculado ? (
+                        <Button onClick={() => setOpenDelete(false)} variant="contained" sx={{ background: "#006633" }}>
+                            Entendido
+                        </Button>
+                    ) : (
+                        <>
+                            <Button onClick={() => setOpenDelete(false)}>
+                                Cancelar
+                            </Button>
+                            <Button 
+                                onClick={executarRemocao} 
+                                color="error" 
+                                variant="contained"
+                            >
+                                Excluir
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
+
+
+          
+            <Dialog
+                open={openEditBlock}
+                onClose={() => setOpenEditBlock(false)}
+            >
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    Não é possível editar
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        A carne "{carneSelecionada?.descricao}" já possui movimentações em pedidos existentes. Para não alterar o histórico das vendas, a edição está bloqueada.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ pb: 2, px: 3 }}>
+                    <Button onClick={() => setOpenEditBlock(false)} variant="contained" sx={{ background: "#006633" }}>
+                        Entendido
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
 
         </Box>

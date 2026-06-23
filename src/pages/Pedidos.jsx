@@ -17,6 +17,7 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
     DialogActions,
     TextField,
     MenuItem,
@@ -71,6 +72,10 @@ function Pedidos(){
 
     const [open,setOpen] = useState(false);
 
+
+   
+    const [openDelete, setOpenDelete] = useState(false);
+    const [idParaExcluir, setIdParaExcluir] = useState(null);
 
 
 
@@ -329,21 +334,21 @@ function Pedidos(){
 
 
 
-    async function remover(id){
+    
+    function confirmarRemover(id){
+        setIdParaExcluir(id);
+        setOpenDelete(true);
+    }
 
 
-        if(confirm("Deseja excluir este pedido?")){
-
-
-            await excluirPedido(id);
-
-
+   
+    async function executarRemocao(){
+        if(idParaExcluir){
+            await excluirPedido(idParaExcluir);
+            setOpenDelete(false);
+            setIdParaExcluir(null);
             carregar();
-
-
         }
-
-
     }
 
 
@@ -398,10 +403,17 @@ function Pedidos(){
 
         {
 
+          
+            accessorFn:(row)=>{
+                if (!row.itens || row.itens.length === 0) return "Nenhuma";
+                
+                const nomesDasCarnes = row.itens.map(item => {
+                    const carneEncontrada = carnes.find(c => Number(c.id) === Number(item.carneId));
+                    return carneEncontrada ? carneEncontrada.descricao : `Carne (${item.carneId})`;
+                });
 
-            accessorFn:(row)=>
-
-                row.itens?.length ?? 0,
+                return nomesDasCarnes.join(", ");
+            },
 
 
             id:"quantidade",
@@ -466,7 +478,8 @@ function Pedidos(){
 
 
 
-    ],[compradores]);
+    
+    ],[compradores, carnes]);
 
 
 
@@ -479,13 +492,13 @@ function Pedidos(){
     return (
 
 
-        <Box>
+        <Box sx={{p:3}}>
 
 
 
 
 
-            {/* CABEÇALHO */}
+         
 
 
             <Box
@@ -512,6 +525,7 @@ function Pedidos(){
 
                     <Typography
 
+
                         variant="h4"
 
                         sx={{
@@ -533,6 +547,7 @@ function Pedidos(){
 
 
                     <Typography
+
 
                         color="text.secondary"
 
@@ -597,8 +612,7 @@ function Pedidos(){
 
 
 
-            {/* TABELA */}
-
+        
 
 
 
@@ -648,7 +662,7 @@ function Pedidos(){
                             size="small"
 
                             onClick={()=>
-                                remover(row.original.id)
+                                confirmarRemover(row.original.id)
                             }
 
                         >
@@ -675,12 +689,12 @@ function Pedidos(){
 
 
 
-            {/* MODAL */}
 
 
 
 
             <Dialog
+
 
                 open={open}
 
@@ -778,6 +792,7 @@ function Pedidos(){
 
 
                     <Typography
+
 
                         variant="h6"
 
@@ -1112,6 +1127,35 @@ function Pedidos(){
             </Dialog>
 
 
+
+
+          
+            <Dialog
+                open={openDelete}
+                onClose={() => setOpenDelete(false)}
+            >
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    Confirmar Exclusão
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Deseja excluir este pedido? Esta ação não podera ser desfeita!
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ pb: 2, px: 3 }}>
+                    <Button onClick={() => setOpenDelete(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={executarRemocao} 
+                        color="error" 
+                        variant="contained" 
+                        autoFocus
+                    >
+                        Excluir
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
 
         </Box>
