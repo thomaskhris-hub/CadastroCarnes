@@ -80,3 +80,45 @@ A URL da API deve ser configurada no arquivo:
 
 src/api/api.js
 
+# Estrutura dos projetos
+
+## Frontend
+
+CadastroCarnes.Web
+
+src
+├── api
+├── assets
+├── layout
+├── pages
+├── services
+├── App.jsx
+└── main.jsx
+
+## Backend
+
+
+CadastroCarnes.Api
+
+├── Controllers
+├── Models
+├── Data
+├── Services
+├── Migrations
+├── Program.cs
+└── appsettings.json
+
+
+---
+
+# Repositórios
+
+Frontend:
+
+
+https://github.com/thomaskhris-hub/CadastroCarnes
+
+
+Backend:
+
+https://github.com/thomaskhris-hub/CadastroCarnesApi
